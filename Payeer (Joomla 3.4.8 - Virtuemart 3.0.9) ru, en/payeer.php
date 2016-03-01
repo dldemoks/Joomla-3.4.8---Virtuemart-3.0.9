@@ -87,6 +87,23 @@ class plgVmpaymentPayeer extends vmPSPlugin
 			
 			$sign_hash = strtoupper(hash('sha256', implode(":", $arHash)));
 			
+			if ($mb_data["m_sign"] != $sign_hash)
+			{
+				$to = $method->admin_email;
+
+				if (!empty($to))
+				{
+					$subject = "Error payment";
+					$message = "Failed to make the payment through the system Payeer for the following reasons:\n\n";
+					$message .= " - Do not match the digital signature\n";
+					$message .= "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $subject, $message, $headers);
+				}
+				
+				exit($mb_data['m_orderid'] . '|error');
+			}
+			
 			$list_ip_str = str_replace(' ', '', $method->ip_filter);
 			
 			if ($list_ip_str != '') 
@@ -137,23 +154,6 @@ class plgVmpaymentPayeer extends vmPSPlugin
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $path_to_logfile, $log_text, FILE_APPEND);
 			}
 			
-			if ($mb_data["m_sign"] != $sign_hash)
-			{
-				$to = $method->admin_email;
-
-				if (!empty($to))
-				{
-					$subject = "Error payment";
-					$message = "Failed to make the payment through the system Payeer for the following reasons:\n\n";
-					$message .= " - Do not match the digital signature\n";
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
-					mail($to, $subject, $message, $headers);
-				}
-				
-				exit($mb_data['m_orderid'] . '|error');
-			}
-				
 			$virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber($order_number);
 
 			$order['virtuemart_order_id'] 	= $payment->virtuemart_order_id;
