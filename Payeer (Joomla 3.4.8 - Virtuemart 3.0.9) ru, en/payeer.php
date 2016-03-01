@@ -131,15 +131,31 @@ class plgVmpaymentPayeer extends vmPSPlugin
 				"description		".base64_decode($mb_data["m_desc"])."\n".
 				"status				".$mb_data["m_status"]."\n".
 				"sign				".$mb_data["m_sign"]."\n\n";
-						
+
 			if (!empty($path_to_logfile))
 			{	
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . $path_to_logfile, $log_text, FILE_APPEND);
 			}
 			
-			$virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber($order_number);
+			if ($mb_data["m_sign"] != $sign_hash)
+			{
+				$to = $method->admin_email;
+
+				if (!empty($to))
+				{
+					$subject = "Error payment";
+					$message = "Failed to make the payment through the system Payeer for the following reasons:\n\n";
+					$message .= " - Do not match the digital signature\n";
+					$message .= "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $subject, $message, $headers);
+				}
 				
-			
+				exit($mb_data['m_orderid'] . '|error');
+			}
+				
+			$virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber($order_number);
+
 			$order['virtuemart_order_id'] 	= $payment->virtuemart_order_id;
 			$order['virtuemart_user_id'] 	= $payment->virtuemart_user_id;
 			$order['order_total'] 			= $mb_data['m_amount'];
@@ -148,8 +164,8 @@ class plgVmpaymentPayeer extends vmPSPlugin
 			$order['comments']            	= vmText::sprintf('VMPAYMENT_PAYEER_PAYMENT_CONFIRMED', $order_number);
 			
 			$modelOrder = new VirtueMartModelOrders();
-				
-			if ($mb_data['m_sign'] == $sign_hash && $mb_data['m_status'] == "success" && $valid_ip)
+
+			if ($mb_data['m_status'] == "success" && $valid_ip)
 			{
 				$order['order_status'] = $method->status_success;
 				$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, TRUE);
@@ -159,17 +175,12 @@ class plgVmpaymentPayeer extends vmPSPlugin
 			{
 				$order['order_status'] = $method->status_canceled;
 				$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, TRUE);
+				$to = $method->admin_email;
 				
-				if (!empty($method->admin_email))
+				if (!empty($to))
 				{
-					$to = $method->admin_email;
 					$subject = "Error payment";
 					$message = "Failed to make the payment through the system Payeer for the following reasons:\n\n";
-					
-					if ($mb_data["m_sign"] != $sign_hash)
-					{
-						$message .= " - Do not match the digital signature\n";
-					}
 					
 					if ($mb_data['m_status'] != "success")
 					{
@@ -190,7 +201,7 @@ class plgVmpaymentPayeer extends vmPSPlugin
 				}
 			}
 
-			exit ($mb_data['m_orderid'] . '|error');
+			exit($mb_data['m_orderid'] . '|error');
 		}
     }
 	
