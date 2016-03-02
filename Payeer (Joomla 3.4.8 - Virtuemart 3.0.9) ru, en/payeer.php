@@ -55,7 +55,6 @@ class plgVmpaymentPayeer extends vmPSPlugin
         return $SQLfields;
     }
 	
-    
 	public function plgVmOnPaymentNotification()
     {
 		if (!class_exists ('VirtueMartModelOrders')) 
@@ -101,7 +100,8 @@ class plgVmpaymentPayeer extends vmPSPlugin
 					mail($to, $subject, $message, $headers);
 				}
 				
-				exit($mb_data['m_orderid'] . '|error');
+				echo $mb_data['m_orderid'] . '|error';
+				return false;
 			}
 			
 			$list_ip_str = str_replace(' ', '', $method->ip_filter);
@@ -169,7 +169,8 @@ class plgVmpaymentPayeer extends vmPSPlugin
 			{
 				$order['order_status'] = $method->status_success;
 				$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, TRUE);
-				exit($mb_data['m_orderid'] . '|success');
+				echo $mb_data['m_orderid'] . '|success';
+				return false;
 			}
 			else
 			{
@@ -200,8 +201,9 @@ class plgVmpaymentPayeer extends vmPSPlugin
 					mail($to, $subject, $message, $headers);
 				}
 			}
-
-			exit($mb_data['m_orderid'] . '|error');
+			
+			echo $mb_data['m_orderid'] . '|error';
+			return false;
 		}
     }
 	
