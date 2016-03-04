@@ -210,6 +210,8 @@ class plgVmpaymentPayeer extends vmPSPlugin
 				echo $mb_data['m_orderid'] . '|success';
 			}
 		}
+		
+		return true;
     }
 	
 	function plgVmOnPaymentResponseReceived (&$html) 
