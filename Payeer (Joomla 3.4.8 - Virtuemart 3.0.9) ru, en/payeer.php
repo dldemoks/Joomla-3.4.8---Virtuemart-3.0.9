@@ -169,18 +169,6 @@ class plgVmpaymentPayeer extends vmPSPlugin
 					$err = true;
 				}
 				
-				$db = JFactory::getDBO();
-				$q = "SELECT order_status FROM #__virtuemart_orders WHERE `virtuemart_order_id`='" . $virtuemart_order_id . "'";
-				$db->setQuery($q);
-				$db->query();
-				$order_status = $db->loadResult();
-
-				if (!$order_status)
-				{
-					$message .= " order does not exist\n";
-					$err = true;
-				}
-				
 				// проверка статуса
 				
 				if (!$err)
@@ -188,24 +176,14 @@ class plgVmpaymentPayeer extends vmPSPlugin
 					switch ($payeer_data['m_status'])
 					{
 						case 'success':
-						
-							if ($order_status != $method->status_success)
-							{
-								$order['order_status'] = $method->status_success;
-								$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, true);
-							}
-							
+							$order['order_status'] = $method->status_success;
+							$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, true);
 							break;
 							
 						default:
-						
-							if ($order_status != $method->status_canceled)
-							{
-								$order['order_status'] = $method->status_canceled;
-								$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, true);
-							}
-
 							$message .= " The payment status is not success\n";
+							$order['order_status'] = $method->status_canceled;
+							$modelOrder->updateStatusForOneOrder($virtuemart_order_id, $order, true);
 							$err = true;
 							break;
 					}
@@ -406,7 +384,7 @@ class plgVmpaymentPayeer extends vmPSPlugin
 			return NULL;
 		} // Another method was selected, do nothing
 
-		if (!($paymentTable = $this->_getInternalData ($virtuemart_order_id))) {
+		if (!($paymentTable = $this->_getPayeerInternalData ($virtuemart_order_id))) {
 			// JError::raiseWarning(500, $db->getErrorMsg());
 			return '';
 		}
@@ -597,4 +575,20 @@ class plgVmpaymentPayeer extends vmPSPlugin
         return $mailer->Send();
     }
     
+	private function _getPayeerInternalData($virtuemart_order_id, $order_number = '') {
+		if (empty($order_number)) {
+			$orderModel = VmModel::getModel('orders');
+			$order_number = $orderModel->getOrderNumber($virtuemart_order_id);
+		}
+		$db = JFactory::getDBO();
+		$q = 'SELECT * FROM `' . $this->_tablename . '` WHERE ';
+		$q .= " `order_number` = '" . $order_number . "'";
+
+		$db->setQuery($q);
+		if (!($payments = $db->loadObjectList())) {
+			// JError::raiseWarning(500, $db->getErrorMsg());
+			return '';
+		}
+		return $payments;
+	}
 }
