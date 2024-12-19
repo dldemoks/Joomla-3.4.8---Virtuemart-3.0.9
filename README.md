@@ -1,8 +1,8 @@
 Joomla
 ======
-Модуль оплаты Payeer
+Payment module Payeer
 
-Для установки модуля скачайте и распакуйте архив.
-Далее следуйте прилагаемой инструкции
+To install the module, download and unzip the archive.
+Then follow the attached instructions.
 
-Поддерживаемая версия CMS Joomla 3.4.8 с установленным Virtuemart 3.0.9
+Support for CMS Joomla 3.4.8 with VirtueMart 3.0.9 installed
